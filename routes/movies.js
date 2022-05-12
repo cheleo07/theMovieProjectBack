@@ -18,23 +18,16 @@ module.exports = (app) => {
         return res.status(200).send(JSON.stringify(data));
     });
 
-}
+    app.get('/api/search/movie/:name', async (req, res) => {
+        let name = req.params.name;
 
-// Connect to MongoDB
-/*MongoClient.connect(url, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}, (err, client) => {
-    if (err) {
-        return console.log(err);
-    }
-
-    // Specify database you want to access
-    const db = client.db('theMovies');
-    const movies = db.collection('Films');
-    console.log(`MongoDB Connected: ${url}`);
-    //methods.createCollection(db)
-});*/
+        const response = await fetch('https://api.themoviedb.org/3/search/movie?api_key='+api+'&query='+name+'&page=1&include_adult=false&language=fr-FR',
+            {   method: 'GET',
+                headers: {'Content-Type': 'application/json'}
+            });
+        const data = await response.json();
+        return res.status(200).send(JSON.stringify(data));
+    });
 
     // Point d'api qui sert à liker un film
     app.put('/api/like/:idMovie', async (req, res) => {
@@ -107,3 +100,23 @@ async function getMovieFromApi(idMovie, callback){
     const data = await response.json();
     callback(data.original_title)
 }
+
+}
+
+// Connect to MongoDB
+/*MongoClient.connect(url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}, (err, client) => {
+    if (err) {
+        return console.log(err);
+    }
+
+    // Specify database you want to access
+    const db = client.db('theMovies');
+    const movies = db.collection('Films');
+    console.log(`MongoDB Connected: ${url}`);
+    //methods.createCollection(db)
+});*/
+
+    
