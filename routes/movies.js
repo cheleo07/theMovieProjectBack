@@ -1,37 +1,65 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const api = require('../api_key.js');
-const MongoClient = require('mongodb').MongoClient;
-const url = 'mongodb://127.0.0.1:27017';
-const methods = require('./methods.js')
+var MongoClient = require('mongodb').MongoClient;
 var mongo = require('mongodb');
+var url = "mongodb://localhost:27017/";
 
 module.exports = (app) => {
 
+    // Point d'api qui sert à récupérer une liste de films : les données viennent de l'api et de la base de données
     app.get('/api/discover/movie/:page', async (req, res) => {
         let page = req.params.page;
 
         const response = await fetch('https://api.themoviedb.org/3/discover/movie?api_key='+ api +'&language=fr-FR&page='+ page,
-            {   method: 'GET',
-                headers: {'Content-Type': 'application/json'}
-            });
-        const data = await response.json();
-        return res.status(200).send(JSON.stringify(data));
-    });
+                        {   method: 'GET',
+                            headers: {'Content-Type': 'application/json'}
+                        });
 
-    app.get('/api/search/movie/:name', async (req, res) => {
-        let name = req.params.name;
-
-        const response = await fetch('https://api.themoviedb.org/3/search/movie?api_key='+api+'&query='+name+'&page=1&include_adult=false&language=fr-FR',
-            {   method: 'GET',
-                headers: {'Content-Type': 'application/json'}
-            });
         const data = await response.json();
-        return res.status(200).send(JSON.stringify(data));
+        // si la liste des films n'est pas nulle
+        if(data.results.length !== 0){
+            let new_data = {
+                "page": data.page,
+                "results": [],
+                "total_pages": data.total_pages,
+                "total_results": data.total_results
+            }
+
+            // connexion à la base de données Mongo
+            MongoClient.connect(url, function(err, db) {
+                var dbo = db.db("theMovieDb");
+                let j = 0;
+
+                // on parcourt la liste des films récupérés
+                for (var i = 0; i < data.results.length; i++) {
+                    let result = data.results[i];
+                    result.nb_likes = 0;
+
+                    // on recherche dans la base de données un enregistrement qui correspond à l'id du film courant
+                    dbo.collection("Films").findOne({id_mdb: result.id}, function (err, recup) {
+                        if(recup == null) {
+                            result.nb_likes = 0;
+                        } else {
+                            result.nb_likes = recup.nb_likes;
+                        }
+                        new_data.results.push(result);
+
+                        j++;
+                        if(j == data.results.length-1){
+                            db.close();
+                            return res.status(200).send(JSON.stringify(new_data));
+                        }
+                    })
+                }
+            })
+        } else {
+            return res.status(404).send(JSON.stringify(data));
+        }
     });
 
     // Point d'api qui sert à liker un film
     app.put('/api/like/:idMovie', async (req, res) => {
-        let idMovie = req.params.idMovie; // id du film dans l'api de the movie db
+        let idMovie = parseInt(req.params.idMovie); // id du film dans l'api de the movie db
 
         // retour de la requête
         let new_data = {
@@ -77,7 +105,7 @@ module.exports = (app) => {
                             new_data.nb_likes = old_nb_likes + 1;
                             dbo.collection("Films").updateOne(myquery, new_nb_likes, function(err, resultat2) {
                                 if (err) throw err;
-                                console.log("1 document updated");
+                                // console.log("1 document updated");
                                 new_data.name = result.name;
                                 db.close();
                                 return res.status(200).send(JSON.stringify(new_data));
@@ -90,6 +118,7 @@ module.exports = (app) => {
 
         });
     });
+}
 
 // Fonction servant à récupérer le nom d'un film dans l'api de themoviedb à partir de son id
 async function getMovieFromApi(idMovie, callback){
@@ -100,23 +129,3 @@ async function getMovieFromApi(idMovie, callback){
     const data = await response.json();
     callback(data.original_title)
 }
-
-}
-
-// Connect to MongoDB
-/*MongoClient.connect(url, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}, (err, client) => {
-    if (err) {
-        return console.log(err);
-    }
-
-    // Specify database you want to access
-    const db = client.db('theMovies');
-    const movies = db.collection('Films');
-    console.log(`MongoDB Connected: ${url}`);
-    //methods.createCollection(db)
-});*/
-
-    
