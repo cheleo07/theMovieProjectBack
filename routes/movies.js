@@ -1,7 +1,6 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const api = require('../api_key.js');
 var MongoClient = require('mongodb').MongoClient;
-var mongo = require('mongodb');
 var url = "mongodb://localhost:27017/";
 
 module.exports = (app) => {
