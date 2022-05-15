@@ -1,6 +1,6 @@
 # The Movie Project BACK & FRONT
 
-Notre projet a été développé avec NodeJS pour le serveur et avec React pour le front. Sur le serveur se trouve tous les appels API de movieDB ainsi qu'à une base de données locale MongoDB (installée au préalable). 
+Notre projet a été développé avec NodeJS côté serveur et avec React côté front. Sur le serveur se trouve tous les appels API de movieDB ainsi qu'à une base de données locale MongoDB (installée au préalable). 
 
 ## Lancement du projet 
 
@@ -9,7 +9,7 @@ Notre projet a été développé avec NodeJS pour le serveur et avec React pour 
 > npm install
 
 ### Pour lancer le serveur
-On utilise la commande ci-dessous, en ayant bien vérifier que nous étions dans le bon dossier. Le port d'écoute est 3005.
+On utilise la commande ci-dessous, en ayant bien vérifié que nous étions dans le bon dossier. Le port d'écoute est 3005.
 > node main.js
 
 ### Pour lancer le framework
