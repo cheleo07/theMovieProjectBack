@@ -6,10 +6,8 @@ var url = "mongodb://localhost:27017/";
 module.exports = (app) => {
 
     // Point d'api qui sert à récupérer une liste de films : les données viennent de l'api et de la base de données
-    app.get('/api/discover/movie/:page', async (req, res) => {
-        let page = req.params.page;
-
-        const response = await fetch('https://api.themoviedb.org/3/discover/movie?api_key='+ api +'&language=fr-FR&page='+ page,
+    app.get('/api/discover/movie', async (req, res) => {
+        const response = await fetch('https://api.themoviedb.org/3/discover/movie?api_key='+ api +'&language=fr-FR',
                         {   method: 'GET',
                             headers: {'Content-Type': 'application/json'}
                         });
@@ -114,53 +112,53 @@ module.exports = (app) => {
             }
 
         });
-
-
-        // Point d'api qui sert à ajouter un commentaire dans la base locale
-        app.post('/api/comment/:idMovie', async (req, res) => {
-            let idMovie = parseInt(req.params.idMovie); // id du film dans l'api de the movie db
-            let pseudo = req.body.pseudo;
-            let review = req.body.review;
-            let rate = req.body.rate;
-            // retour de la requête
-            let new_data = {
-                "name": ""
-            };
-
-            MongoClient.connect(url, function (err, db) {
-                if (err) {
-                    // Il y a eu une erreur de connexion à mongodb
-                    db.close();
-                    new_data.message = "Le serveur ne parvient pas à se connecter.";
-                    return res.status(500).send(JSON.stringify(new_data));
-                } else {
-                    let genreFilm = '';
-                    getMovieFromApi(idMovie, function (movieData) {
-                        getGenreListFromApi(function(listGenres) {
-                            for (let i=0; i< movieData.genre_ids.length ; i++) {
-                                genreFilm += getGenreFilm(listGenres, movieData.genre_ids[i]) + ' ';
-                            }
-                            let insertion = {
-                                "pseudo": pseudo,
-                                "review":review,
-                                "genre": genreFilm,
-                                "date": date().now,
-                                "rate": rate,
-                                "id_mdb": idMovie
-                            }
-                            dbo.collection("Commentaire").insertOne(insertion, function(err, resultat2) {
-                                if (err) throw err;
-                                new_date.message = "Le commentaire a bien été enregistré.";
-                                db.close();
-                                return res.status(200).send(JSON.stringify(new_data));
-                            });
-                        })
-                    })
-                }
-            });
-        });
     });
 
+    // Point d'api qui sert à ajouter un commentaire dans la base locale
+    app.post('/api/comment/:idMovie', async (req, res) => {
+        let idMovie = parseInt(req.params.idMovie); // id du film dans l'api de the movie db
+        let pseudo = req.body.pseudo;
+        let review = req.body.review;
+        let rate = req.body.rate;
+        // retour de la requête
+        let new_data = {
+            "name": ""
+        };
+
+        MongoClient.connect(url, function (err, db) {
+            if (err) {
+                // Il y a eu une erreur de connexion à mongodb
+                db.close();
+                new_data.message = "Le serveur ne parvient pas à se connecter.";
+                return res.status(500).send(JSON.stringify(new_data));
+            } else {
+                let genreFilm = '';
+                getMovieFromApi(idMovie, function (movieData) {
+                    getGenreListFromApi(function(listGenres) {
+                        for (let i=0; i< movieData.genres.length ; i++) {
+                            genreFilm += getGenreFilm(listGenres, movieData.genres[i]) + ' ';
+                        }
+                        let insertion = {
+                            "pseudo": pseudo,
+                            "review":review,
+                            "genre": genreFilm,
+                            "date": new Date(),
+                            "rate": rate,
+                            "id_mdb": idMovie
+                        }
+                        console.log(insertion)
+                        var dbo = db.db("theMovieDb");
+                        dbo.collection("Commentaire").insertOne(insertion, function(err, resultat2) {
+                            if (err) throw err;
+                            new_data.message = "Le commentaire a bien été enregistré.";
+                            db.close();
+                            return res.status(200).send(JSON.stringify(new_data));
+                        });
+                    })
+                })
+            }
+        });
+    });
 
     // Point d'api qui sert à récupérer les commentaires d'un film dans la base locale
     app.get('/api/comment/get/:idMovie', async (req, res) => {
@@ -181,7 +179,7 @@ module.exports = (app) => {
             } else {
                 var dbo = db.db("theMovieDb");
                 // On recherche dans la base de données locale, la liste des commentaires ayant pour idMovie
-                dbo.collection("Commentaire").find({id_mdb: idMovie}, function(err, results) {
+                dbo.collection("Commentaire").find({id_mdb: idMovie}).toArray(function(err, results) {
                     if (err) {
                         // Il y a eu une erreur de recherche
                         db.close();
@@ -190,6 +188,7 @@ module.exports = (app) => {
                     } else {
                         comments.message = "Succès";
                         comments.liste = results;
+                        return res.status(200).send(JSON.stringify(comments));
                     }
                 });
             }
