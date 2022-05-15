@@ -11,5 +11,5 @@ require('./routes/movies')(app);
 
 const PORT = process.env.PORT || 3005;
 app.listen(PORT, () => {
-    console.log(`app running on port ${PORT}`)
+    // console.log(`app running on port ${PORT}`)
 });

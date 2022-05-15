@@ -89,7 +89,6 @@ module.exports = (app) => {
                                 // on insère dans la table, une nouvelle ligne avec l'id du film dans themoviedb, son nom et un compteur de likes à 1
                                 dbo.collection("Films").insertOne(myobj, function(err, resultat2) {
                                     if (err) throw err;
-                                    // console.log("1 document inserted");
                                     new_data.nb_likes = 1;
                                     new_data.name = movieName;
                                     db.close();
@@ -104,7 +103,6 @@ module.exports = (app) => {
                             new_data.nb_likes = old_nb_likes + 1;
                             dbo.collection("Films").updateOne(myquery, new_nb_likes, function(err, resultat2) {
                                 if (err) throw err;
-                                // console.log("1 document updated");
                                 new_data.name = result.name;
                                 db.close();
                                 return res.status(200).send(JSON.stringify(new_data));
@@ -142,7 +140,6 @@ module.exports = (app) => {
                             for (let i=0; i< movieData.genre_ids.length ; i++) {
                                 genreFilm += getGenreFilm(listGenres, movieData.genre_ids[i]) + ' ';
                             }
-                            console.log(" get genre list from api")
                             let insertion = {
                                 "pseudo": pseudo,
                                 "review":review,
@@ -153,7 +150,6 @@ module.exports = (app) => {
                             }
                             dbo.collection("Commentaire").insertOne(insertion, function(err, resultat2) {
                                 if (err) throw err;
-                                console.log("success")
                                 new_date.message = "Le commentaire a bien été enregistré.";
                                 db.close();
                                 return res.status(200).send(JSON.stringify(new_data));

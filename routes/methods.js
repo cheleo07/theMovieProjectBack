@@ -2,11 +2,11 @@ function createCollection(db){
     if(db.getCollection("Films").exists != null){
         db.createCollection("customers", function(err, res) {
             if (err) throw err;
-            console.log("Collection created!");
+            // console.log("Collection created!");
             client.close();
           });
     }
-    console.log("Collection already exist!");
+    // console.log("Collection already exist!");
 }
 
 function insertMovies(movies){
@@ -19,25 +19,27 @@ function insertMovies(movies){
 }
 
 function insertMovie(movies, movieName){
-    movies.insertOne({ name: movieName }, (err, result) => { console.log(result); });
+    movies.insertOne({ name: movieName }, (err, result) => {
+        // console.log(result);
+    });
 }
 
 function getMovies(movies){
     movies.find().toArray((err, results) => {
-        console.log(results);
+        // console.log(results);
     });
 }
 
 function updateMovie(movies, movieName, newMovieName){
     movies.updateOne({ name: movieName }, { $set: { name: newMovieName } },
     (err, result) => {
-        console.log(result);
+        // console.log(result);
     });
 }
 
 function findMovie(movies, movieName){
     movies.find({ name: movieName }).toArray((err, result) => {
-        console.log(result);
+        // console.log(result);
     });
 }
 
