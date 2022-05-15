@@ -116,6 +116,52 @@ module.exports = (app) => {
             }
 
         });
+
+
+        // Point d'api qui sert à ajouter un commentaire dans la base locale
+        app.post('/api/comment/:idMovie', async (req, res) => {
+            let idMovie = parseInt(req.params.idMovie); // id du film dans l'api de the movie db
+            let pseudo = req.body.pseudo;
+            let review = req.body.review;
+            let rate = req.body.rate;
+            // retour de la requête
+            let new_data = {
+                "name": ""
+            };
+
+            MongoClient.connect(url, function (err, db) {
+                if (err) {
+                    // Il y a eu une erreur de connexion à mongodb
+                    db.close();
+                    new_data.message = "Le serveur ne parvient pas à se connecter.";
+                    return res.status(500).send(JSON.stringify(new_data));
+                } else {
+                    let genreFilm = '';
+                    getMovieFromApi(idMovie, function (movieData) {
+                        getGenreListFromApi(function(listGenres) {
+                            for (let i=0; i< movieData.genre_ids.length ; i++) {
+                                genreFilm += getGenreFilm(listGenres, movieData.genre_ids[i]) + ' ';
+                            }
+                            console.log(" get genre list from api")
+                            let insertion = {
+                                "pseudo": pseudo,
+                                "review":review,
+                                "genre": genreFilm,
+                                "date": date().now,
+                                "rate": rate
+                            }
+                            dbo.collection("Commentaire").insertOne(insertion, function(err, resultat2) {
+                                if (err) throw err;
+                                console.log("success")
+                                new_date.message = "Le commentaire a bien été enregistré.";
+                                db.close();
+                                return res.status(200).send(JSON.stringify(new_data));
+                            });
+                        })
+                    })
+                }
+            });
+        });
     });
 }
 
@@ -126,5 +172,24 @@ async function getMovieFromApi(idMovie, callback){
             headers: {'Content-Type': 'application/json'}
         });
     const data = await response.json();
-    callback(data.original_title)
+    callback(data)
+}
+
+async function getGenreListFromApi(callback){
+    const response = await fetch('https://api.themoviedb.org/3/genre/movie/list?api_key='+ api +'&language=fr-FR',
+        {
+            method: 'GET',
+            headers: { 'Content-Type' : 'application/json'}
+        });
+    const data = await response.json();
+    callback(data.genres)
+}
+
+
+function getGenreFilm(listGenres, idGenre) {
+    for (let i=0; i< listGenres.length ; i++) {
+        if( listGenres[i].id === idGenre) {
+            return listGenres[i].name;
+        }
+    }
 }
