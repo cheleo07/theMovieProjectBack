@@ -146,7 +146,6 @@ module.exports = (app) => {
                             "rate": rate,
                             "id_mdb": idMovie
                         }
-                        console.log(insertion)
                         var dbo = db.db("theMovieDb");
                         dbo.collection("Commentaire").insertOne(insertion, function(err, resultat2) {
                             if (err) throw err;
