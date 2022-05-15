@@ -148,7 +148,8 @@ module.exports = (app) => {
                                 "review":review,
                                 "genre": genreFilm,
                                 "date": date().now,
-                                "rate": rate
+                                "rate": rate,
+                                "id_mdb": idMovie
                             }
                             dbo.collection("Commentaire").insertOne(insertion, function(err, resultat2) {
                                 if (err) throw err;
@@ -161,6 +162,41 @@ module.exports = (app) => {
                     })
                 }
             });
+        });
+    });
+
+
+    // Point d'api qui sert à récupérer les commentaires d'un film dans la base locale
+    app.get('/api/comment/get/:idMovie', async (req, res) => {
+        let idMovie = parseInt(req.params.idMovie); // id du film dans l'api de the movie db
+
+        // retour de la requête
+        let comments = {
+            "message": "",
+            "liste": []
+        };
+
+        MongoClient.connect(url, function(err, db) {
+            if (err) {
+                // Il y a eu une erreur de connexion à mongodb
+                db.close();
+                comments.message = err;
+                return res.status(500).send(JSON.stringify(comments));
+            } else {
+                var dbo = db.db("theMovieDb");
+                // On recherche dans la base de données locale, la liste des commentaires ayant pour idMovie
+                dbo.collection("Commentaire").find({id_mdb: idMovie}, function(err, results) {
+                    if (err) {
+                        // Il y a eu une erreur de recherche
+                        db.close();
+                        comments.message = err;
+                        return res.status(500).send(JSON.stringify(comments));
+                    } else {
+                        comments.message = "Succès";
+                        comments.liste = results;
+                    }
+                });
+            }
         });
     });
 }
